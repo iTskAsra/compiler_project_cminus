@@ -6,7 +6,7 @@ symbol_table_address = "symbol_table.txt"
 input_address = "input.txt"
 current_line = 1
 input_stream_pointer = 0
-error_raised = 'false'
+error_raised = True
 symbol_table_elements = [
     "if", "else", "void", "int", "repeat", "return", "until", "break"
 ]
@@ -18,6 +18,8 @@ white_space_rexp = re.compile(r'\n|\t|\f|\r|\v|\s')
 symbol_rexp = re.compile(r'/|;|:|,|{|}|\[|]|=|==|\+|-|(|)|\*|<')
 alphabet_rexp = re.compile(r'[A-Za-z]')
 num_rexp = re.compile(r'[0-9]')
+valid_inputs = re.compile(r"[A-Za-z]|[0-9]|;|:|,|\[|\]|\(|\)|{|}|\+|-|\*|=|<|==|/|\n|\r|\t|\v|\f|\s")
+keywords = (r'if|else|int|repeat|break|void|until')
 
 
 def initiate_new_line(current_line):
@@ -92,41 +94,104 @@ def check_white_space(char):
     return re.match(white_space_rexp, char)
 
 
-def start_state(input_stream_pointer):
+def start_state():
+    global error_raised, input_stream_pointer
     while input_stream[input_stream_pointer]:
         if check_white_space(input_stream[input_stream_pointer]):
             input_stream_pointer += 1
             continue
         if re.match(input_stream[input_stream_pointer], symbol_rexp):
-            symbol_state(input_stream_pointer)
+            symbol_state()
+            break
         elif re.match(input_stream[input_stream_pointer], num_rexp):
-            num_state(input_stream_pointer)
+            num_state()
+            break
         elif re.match(input_stream[input_stream_pointer], alphabet_rexp):
-            keyword_or_ID_state(input_stream_pointer)
+            keyword_or_id_state()
+            break
         elif input_stream[input_stream_pointer] == "/":
-            comment_state(input_stream_pointer)
+            comment_state()
+            break
         else:
-            throw_error("Invalid input", input_stream[input_stream_pointer])
+            update_errors(current_line, input_stream[input_stream_pointer], "Invalid input")
+            error_raised = True
 
-def symbol_state(pointer):
+
+def symbol_state():
     global input_stream_pointer
-    if input_stream[pointer]=="=":
-        if input_stream[pointer+1]:
-            if input_stream[pointer+1]=="=":
+    if input_stream[input_stream_pointer] == "=":
+        if input_stream[input_stream_pointer + 1]:
+            if input_stream[input_stream_pointer + 1] == "=":
                 update_tokens(current_line, "==", "SYMBOL")
-                input_stream_pointer+=2
+                input_stream_pointer += 2
+                return
+    else:
+        update_tokens(current_line, input_stream[input_stream_pointer], "SYMBOL")
+        input_stream_pointer += 1
+        return
 
 
-def num_state(pointer):
+def num_state():
+    global input_stream_pointer, error_raised
+    num = ""
+    num += (input_stream[input_stream_pointer])
+    input_stream_pointer += 1
+    while True:
+        if re.match(input_stream[input_stream_pointer], num_rexp):
+            num += (input_stream[input_stream_pointer])
+            input_stream_pointer += 1
+            continue
+        elif re.match(alphabet_rexp, input_stream[input_stream_pointer]):
+            update_errors(current_line, num + input_stream[input_stream_pointer], "Invalid number")
+            error_raised = True
+            input_stream_pointer += 1
+            return
+        elif re.match(valid_inputs, input_stream[input_stream_pointer]):
+            if check_white_space(input_stream[input_stream_pointer]):
+                input_stream_pointer += 1
+            update_tokens(current_line, num, "NUM")
+            # input_stream_pointer += 1
+            return
+        else:
+            update_tokens(current_line, num, "NUM")
+            update_errors(current_line, input_stream[input_stream_pointer], "Invalid input")
+            error_raised = True
+            input_stream_pointer += 1
+            return
 
 
+def keyword_or_id_state():
+    global input_stream_pointer, error_raised
+    keyword_or_id = ""
+    keyword_or_id += input_stream[input_stream_pointer]
+    input_stream_pointer += 1
+    while True:
+        if re.match(alphabet_rexp, input_stream[input_stream_pointer]) or re.match(num_rexp,
+                                                                                   input_stream[input_stream_pointer]):
+            keyword_or_id += input_stream[input_stream_pointer]
+            input_stream_pointer += 1
+            continue
+        elif re.match(symbol_rexp, input_stream[input_stream_pointer]) or check_white_space(
+                input_stream[input_stream_pointer]):
+            if re.match(keywords, keyword_or_id):
+                update_tokens(current_line, keyword_or_id, "KEYWORD")
+            else:
+                update_tokens(current_line, keyword_or_id, "ID")
+            update_symbol_table(keyword_or_id)
+            if re.match(white_space_rexp, input_stream[input_stream_pointer]):
+                input_stream_pointer += 1
+            return
+        else:
+            if re.match(keywords, keyword_or_id):
+                update_tokens(current_line, keyword_or_id, "KEYWORD")
+            else:
+                update_tokens(current_line, keyword_or_id, "ID")
+            update_symbol_table(keyword_or_id)
+            update_errors(current_line, input_stream[input_stream_pointer], "Invalid input")
+            error_raised = True
+            input_stream_pointer += 1
+            return
 
-def keyword_or_ID_state(pointer):
 
-
-
-def comment_state(pointer):
-
-
-
-def throw_error(error_message, character):
+def comment_state():
+    global input_stream_pointer
