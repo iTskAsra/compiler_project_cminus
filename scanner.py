@@ -194,4 +194,32 @@ def keyword_or_id_state():
 
 
 def comment_state():
-    global input_stream_pointer
+    global input_stream_pointer, error_raised
+    comment = ""
+    input_stream_pointer += 1
+    if input_stream[input_stream_pointer] == "/":
+        input_stream_pointer+=1
+        while True:
+            if (input_stream[input_stream_pointer] == "\n") or (not input_stream[input_stream_pointer]):
+                check_white_space(input_stream[input_stream_pointer])
+                input_stream_pointer += 1
+                return
+            else:
+                comment += input_stream[input_stream_pointer]
+                input_stream_pointer += 1
+                continue
+    elif input_stream[input_stream_pointer] == "*":
+        input_stream_pointer+=1
+        while True:
+            if input_stream[input_stream_pointer] == "*" and input_stream[input_stream_pointer+1] == "/":
+                input_stream_pointer+=2
+                return
+            elif not input_stream[input_stream_pointer]:
+                update_errors(current_line, f"{comment[0:7]}...", "Unclosed comment")
+                error_raised = True
+                return
+            else:
+                comment+=input_stream[input_stream_pointer]
+                check_white_space(input_stream[input_stream_pointer])
+                input_stream_pointer+=1
+
