@@ -21,10 +21,10 @@ terminate_flag = False
 eof_flag = False
 unseen_token = False
 error_raised = False
-lexical_errors = [[]]
+lexical_errors = []
 tokens = [[]]
 symbol_table_elements = [
-    "if", "else", "void", "int", "repeat", "return", "until", "break"
+    "if", "else", "void", "int", "repeat", "break", "until", "return"
 ]
 
 
@@ -40,13 +40,13 @@ def update_symbol_table(element):
 def update_tokens(line, token, ttype):
     global unseen_token, new_token, current_line
     tokens[line - 1].append((token, ttype))
-    #print(token)
+    # print(token)
     unseen_token = True
     new_token = [current_line, token, ttype]
 
 
 def update_errors(line, error, error_description):
-    lexical_errors[line - 1].append((error, error_description))
+    lexical_errors.append([line, error, error_description])
 
 
 def save_symbol_table(address):
@@ -58,10 +58,25 @@ def save_symbol_table(address):
 def save_errors(address):
     if error_raised:
         with open(address, 'w') as f:
-            for i in range(current_line - 1):
-                if not lexical_errors[i]:
+            cline = 1
+            lines_first_token = True
+            no_line_written_yet = True
+            for error in lexical_errors:
+                if not error:
                     continue
-                f.write(f"{i + 1}.\t{lexical_errors[i]}\n")
+                line_number = error[0]
+                error_itself = error[1]
+                error_description = error[2]
+                while line_number != cline:
+                    cline += 1
+                    lines_first_token = True
+                if lines_first_token:
+                    lines_first_token = False
+                    if cline != 1 and (not no_line_written_yet):
+                        f.write("\n")
+                    f.write(f"{cline}.\t")
+                f.write(f"({error_itself}, {error_description}) ")
+                no_line_written_yet = False
 
 
 def save_tokens(address):
@@ -93,13 +108,14 @@ def check_white_space(char):
 
 
 def start_state():
-    #print(input_stream[len(input_stream)-1])
+    # print(input_stream[len(input_stream)-1])
     global error_raised, input_stream_pointer, new_token, eof_flag, unseen_token
-    if input_stream_pointer == len(input_stream):
+    if input_stream_pointer >= len(input_stream):
         eof_flag = True
         unseen_token = True
         return
-    while input_stream[input_stream_pointer]:
+    #print(input_stream[input_stream_pointer])
+    while input_stream_pointer in range(len(input_stream)):
         if check_white_space(input_stream[input_stream_pointer]):
             input_stream_pointer += 1
             continue
@@ -117,12 +133,28 @@ def start_state():
             break
         else:
             update_errors(current_line, input_stream[input_stream_pointer], "Invalid input")
+            # print("Henlo")
+            input_stream_pointer += 1
             error_raised = True
             break
 
 
 def symbol_state():
-    global input_stream_pointer, error_raised
+    global input_stream_pointer, error_raised, eof_flag
+    if not (input_stream_pointer+1 in range(len(input_stream))):
+        print("triggered")
+        print(input_stream[input_stream_pointer])
+        update_tokens(current_line, input_stream[input_stream_pointer], "SYMBOL")
+        eof_flag = True
+        return
+    if not re.match(valid_inputs, input_stream[input_stream_pointer + 1]):
+        if input_stream[input_stream_pointer] == "=" or input_stream[input_stream_pointer] == "*":
+            update_errors(current_line, input_stream[input_stream_pointer] + input_stream[input_stream_pointer + 1],
+                          "Invalid "
+                          "input")
+            input_stream_pointer += 2
+            error_raised = True
+            return
     if input_stream[input_stream_pointer] == "=":
         if input_stream[input_stream_pointer + 1]:
             if input_stream[input_stream_pointer + 1] == "=":
@@ -130,11 +162,12 @@ def symbol_state():
                 input_stream_pointer += 2
                 return
         update_tokens(current_line, "=", "SYMBOL")
-        input_stream_pointer+=1
+        input_stream_pointer += 1
         return
     elif input_stream[input_stream_pointer] == "*" and input_stream[input_stream_pointer + 1] == "/":
         update_errors(current_line, "*/", "Unmatched comment")
         error_raised = True
+        input_stream_pointer += 2
         return
     else:
         update_tokens(current_line, input_stream[input_stream_pointer], "SYMBOL")
@@ -146,9 +179,14 @@ def num_state():
     global input_stream_pointer, error_raised
     num = ""
     num += (input_stream[input_stream_pointer])
+    # print(input_stream[input_stream_pointer])
     input_stream_pointer += 1
     while True:
+        if input_stream_pointer == len(input_stream):
+            update_tokens(current_line, num, "NUM")
+            return
         if re.match(num_rexp, input_stream[input_stream_pointer]):
+            # print(input_stream[input_stream_pointer])
             num += (input_stream[input_stream_pointer])
             input_stream_pointer += 1
             continue
@@ -193,25 +231,25 @@ def keyword_or_id_state():
                 input_stream_pointer += 1
             return
         else:
-            if re.match(keywords, keyword_or_id):
-                update_tokens(current_line, keyword_or_id, "KEYWORD")
-            else:
-                update_tokens(current_line, keyword_or_id, "ID")
-            update_symbol_table(keyword_or_id)
-            update_errors(current_line, input_stream[input_stream_pointer], "Invalid input")
+            update_errors(current_line, keyword_or_id + input_stream[input_stream_pointer], "Invalid input")
             error_raised = True
             input_stream_pointer += 1
             return
 
 
 def comment_state():
-    global input_stream_pointer, error_raised
+    global input_stream_pointer, error_raised, eof_flag
     comment = ""
+    if not re.match(valid_inputs, input_stream[input_stream_pointer + 1]):
+        update_errors(current_line, "/" + input_stream[input_stream_pointer + 1])
+        input_stream_pointer += 2
+        error_raised = True
+        return
     input_stream_pointer += 1
     if input_stream[input_stream_pointer] == "/":
         input_stream_pointer += 1
         while True:
-            if (input_stream[input_stream_pointer] == "\n") or (not input_stream[input_stream_pointer]):
+            if (input_stream[input_stream_pointer] == "\n") or (not input_stream_pointer in range(len(input_stream))):
                 check_white_space(input_stream[input_stream_pointer])
                 input_stream_pointer += 1
                 return
@@ -221,18 +259,37 @@ def comment_state():
                 continue
     elif input_stream[input_stream_pointer] == "*":
         input_stream_pointer += 1
+        comment_beginning_line = current_line
         while True:
-            if input_stream[input_stream_pointer] == "*" and input_stream[input_stream_pointer + 1] == "/":
-                input_stream_pointer += 2
-                return
-            elif not input_stream[input_stream_pointer]:
-                update_errors(current_line, f"{comment[0:7]}...", "Unclosed comment")
-                error_raised = True
-                return
+            if input_stream_pointer in range(len(input_stream)):
+                if input_stream[input_stream_pointer] == "*":
+                    if input_stream_pointer + 1 in range(len(input_stream)):
+                        if input_stream[input_stream_pointer + 1] == "/":
+                            input_stream_pointer += 2
+                            return
+                        else:
+                            comment += "*"
+                            input_stream_pointer += 1
+                    else:
+                        update_errors(comment_beginning_line, f"/*{comment[0:5]}...", "Unclosed comment")
+                        error_raised = True
+                        eof_flag = True
+                        return
+                else:
+                    comment += input_stream[input_stream_pointer]
+                    #print(comment)
+                    check_white_space(input_stream[input_stream_pointer])
+                    input_stream_pointer += 1
+
             else:
-                comment += input_stream[input_stream_pointer]
-                check_white_space(input_stream[input_stream_pointer])
-                input_stream_pointer += 1
+                update_errors(comment_beginning_line, f"/*{comment[0:5]}...", "Unclosed comment")
+                error_raised = True
+                eof_flag = True
+                return
+    else:
+        update_errors(current_line, "/", "Invalid input")
+        error_raised = True
+        return
 
 
 def get_next_token():
@@ -241,6 +298,6 @@ def get_next_token():
         start_state()
     if eof_flag:
         terminate_flag = True
-        return
+        return new_token
     unseen_token = False
     return new_token
