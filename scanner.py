@@ -2,11 +2,11 @@ import re
 
 # regular expression compilations:
 white_space_rexp = re.compile(r'\n|\t|\f|\r|\v|\s')
-symbol_rexp = re.compile(r'/|;|:|,|{|}|\[|]|=|==|\+|-|(|)|\*|<')
+symbol_rexp = re.compile(r';|:|,|\[|]|\(|\)|{|\}|\+|-|\*|=|<')
 alphabet_rexp = re.compile(r'[A-Za-z]')
 num_rexp = re.compile(r'[0-9]')
 valid_inputs = re.compile(r"[A-Za-z]|[0-9]|;|:|,|\[|\]|\(|\)|{|}|\+|-|\*|=|<|==|/|\n|\r|\t|\v|\f|\s")
-keywords = re.compile(r'if|else|int|repeat|break|void|until')
+keywords = re.compile(r'if|else|int|repeat|break|void|until|return')
 
 # scanner variables
 tokens_address = "tokens.txt"
@@ -15,8 +15,9 @@ symbol_table_address = "symbol_table.txt"
 input_address = "input.txt"
 current_line = 1
 input_stream_pointer = 0
-new_token = ""
+new_token = []
 input_stream = ""
+terminate_flag = False
 eof_flag = False
 unseen_token = False
 error_raised = False
@@ -37,10 +38,11 @@ def update_symbol_table(element):
 
 
 def update_tokens(line, token, ttype):
-    global unseen_token, new_token
+    global unseen_token, new_token, current_line
     tokens[line - 1].append((token, ttype))
+    #print(token)
     unseen_token = True
-    new_token = str(f"({token}, {ttype})")
+    new_token = [current_line, token, ttype]
 
 
 def update_errors(line, error, error_description):
@@ -84,25 +86,30 @@ def get_input_stream_from_input(address):
 def check_white_space(char):
     if char == "\n":
         global current_line
+        tokens.append([])
+        lexical_errors.append([])
         current_line += 1
     return re.match(white_space_rexp, char)
 
 
 def start_state():
-    global error_raised, input_stream_pointer, new_token, eof_flag
-    if not input_stream[input_stream_pointer]:
+    #print(input_stream[len(input_stream)-1])
+    global error_raised, input_stream_pointer, new_token, eof_flag, unseen_token
+    if input_stream_pointer == len(input_stream):
         eof_flag = True
+        unseen_token = True
+        return
     while input_stream[input_stream_pointer]:
         if check_white_space(input_stream[input_stream_pointer]):
             input_stream_pointer += 1
             continue
-        if re.match(input_stream[input_stream_pointer], symbol_rexp):
+        if re.match(symbol_rexp, input_stream[input_stream_pointer]):
             symbol_state()
             break
-        elif re.match(input_stream[input_stream_pointer], num_rexp):
+        elif re.match(num_rexp, input_stream[input_stream_pointer]):
             num_state()
             break
-        elif re.match(input_stream[input_stream_pointer], alphabet_rexp):
+        elif re.match(alphabet_rexp, input_stream[input_stream_pointer]):
             keyword_or_id_state()
             break
         elif input_stream[input_stream_pointer] == "/":
@@ -122,6 +129,9 @@ def symbol_state():
                 update_tokens(current_line, "==", "SYMBOL")
                 input_stream_pointer += 2
                 return
+        update_tokens(current_line, "=", "SYMBOL")
+        input_stream_pointer+=1
+        return
     elif input_stream[input_stream_pointer] == "*" and input_stream[input_stream_pointer + 1] == "/":
         update_errors(current_line, "*/", "Unmatched comment")
         error_raised = True
@@ -138,7 +148,7 @@ def num_state():
     num += (input_stream[input_stream_pointer])
     input_stream_pointer += 1
     while True:
-        if re.match(input_stream[input_stream_pointer], num_rexp):
+        if re.match(num_rexp, input_stream[input_stream_pointer]):
             num += (input_stream[input_stream_pointer])
             input_stream_pointer += 1
             continue
@@ -226,10 +236,11 @@ def comment_state():
 
 
 def get_next_token():
-    global unseen_token, new_token
+    global unseen_token, new_token, eof_flag, terminate_flag
     while not unseen_token:
         start_state()
     if eof_flag:
-        return ''
+        terminate_flag = True
+        return
     unseen_token = False
     return new_token
