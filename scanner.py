@@ -23,7 +23,7 @@ unseen_token = False
 error_raised = False
 emergency_flag = False
 lexical_errors = []
-tokens = [[]]
+tokens = []
 symbol_table_elements = [
     "if", "else", "void", "int", "repeat", "break", "until", "return"
 ]
@@ -40,7 +40,7 @@ def update_symbol_table(element):
 
 def update_tokens(line, token, ttype):
     global unseen_token, new_token, current_line
-    tokens[line - 1].append((token, ttype))
+    tokens.append([line, token, ttype])
     unseen_token = True
     new_token = [current_line, token, ttype]
 
@@ -80,11 +80,26 @@ def save_errors(address):
 
 
 def save_tokens(address):
-    with open(address, 'w') as f:
-        for i in range(current_line - 1):
-            if not tokens[i]:
+    with open(tokens_address, 'w') as f:
+        current_line = 1
+        lines_first_token = True
+        no_line_written_yet = True
+        for token in tokens:
+            if not token:
                 continue
-            f.write(f"{i + 1}.\t{tokens[i]}\n")
+            line_number = token[0]
+            token_name = token[1]
+            token_type = token[2]
+            while line_number != current_line:
+                current_line += 1
+                lines_first_token = True
+            if lines_first_token:
+                lines_first_token = False
+                if current_line != 1 and (not no_line_written_yet):
+                    f.write("\n")
+                f.write(f"{current_line}.\t")
+            f.write(f"({token_type}, {token_name}) ")
+            no_line_written_yet = False
 
 
 def initiate_lexical_errors_file(address):
@@ -142,7 +157,6 @@ def start_state():
 def symbol_state():
     global input_stream_pointer, error_raised, eof_flag, unseen_token, emergency_flag
     if not (input_stream_pointer+1 in range(len(input_stream))):
-        print(input_stream[input_stream_pointer])
         update_tokens(current_line, input_stream[input_stream_pointer], "SYMBOL")
         input_stream_pointer += 1
         emergency_flag = True
