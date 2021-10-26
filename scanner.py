@@ -21,6 +21,7 @@ terminate_flag = False
 eof_flag = False
 unseen_token = False
 error_raised = False
+emergency_flag = False
 lexical_errors = []
 tokens = [[]]
 symbol_table_elements = [
@@ -40,7 +41,6 @@ def update_symbol_table(element):
 def update_tokens(line, token, ttype):
     global unseen_token, new_token, current_line
     tokens[line - 1].append((token, ttype))
-    # print(token)
     unseen_token = True
     new_token = [current_line, token, ttype]
 
@@ -108,15 +108,16 @@ def check_white_space(char):
 
 
 def start_state():
-    # print(input_stream[len(input_stream)-1])
     global error_raised, input_stream_pointer, new_token, eof_flag, unseen_token
     if input_stream_pointer >= len(input_stream):
         eof_flag = True
         unseen_token = True
         return
-    #print(input_stream[input_stream_pointer])
     while input_stream_pointer in range(len(input_stream)):
         if check_white_space(input_stream[input_stream_pointer]):
+            if not input_stream_pointer in range(len(input_stream)):
+                eof_flag = True
+                return
             input_stream_pointer += 1
             continue
         if re.match(symbol_rexp, input_stream[input_stream_pointer]):
@@ -133,18 +134,18 @@ def start_state():
             break
         else:
             update_errors(current_line, input_stream[input_stream_pointer], "Invalid input")
-            # print("Henlo")
             input_stream_pointer += 1
             error_raised = True
             break
 
 
 def symbol_state():
-    global input_stream_pointer, error_raised, eof_flag
+    global input_stream_pointer, error_raised, eof_flag, unseen_token, emergency_flag
     if not (input_stream_pointer+1 in range(len(input_stream))):
-        print("triggered")
         print(input_stream[input_stream_pointer])
         update_tokens(current_line, input_stream[input_stream_pointer], "SYMBOL")
+        input_stream_pointer += 1
+        emergency_flag = True
         eof_flag = True
         return
     if not re.match(valid_inputs, input_stream[input_stream_pointer + 1]):
@@ -179,14 +180,12 @@ def num_state():
     global input_stream_pointer, error_raised
     num = ""
     num += (input_stream[input_stream_pointer])
-    # print(input_stream[input_stream_pointer])
     input_stream_pointer += 1
     while True:
         if input_stream_pointer == len(input_stream):
             update_tokens(current_line, num, "NUM")
             return
         if re.match(num_rexp, input_stream[input_stream_pointer]):
-            # print(input_stream[input_stream_pointer])
             num += (input_stream[input_stream_pointer])
             input_stream_pointer += 1
             continue
@@ -199,7 +198,6 @@ def num_state():
             if check_white_space(input_stream[input_stream_pointer]):
                 input_stream_pointer += 1
             update_tokens(current_line, num, "NUM")
-            # input_stream_pointer += 1
             return
         else:
             update_tokens(current_line, num, "NUM")
@@ -277,7 +275,6 @@ def comment_state():
                         return
                 else:
                     comment += input_stream[input_stream_pointer]
-                    #print(comment)
                     check_white_space(input_stream[input_stream_pointer])
                     input_stream_pointer += 1
 
@@ -293,11 +290,12 @@ def comment_state():
 
 
 def get_next_token():
-    global unseen_token, new_token, eof_flag, terminate_flag
+    global unseen_token, new_token, eof_flag, terminate_flag, emergency_flag
     while not unseen_token:
         start_state()
-    if eof_flag:
-        terminate_flag = True
-        return new_token
     unseen_token = False
+    if eof_flag:
+        if emergency_flag:
+            return new_token
+        return ''
     return new_token
