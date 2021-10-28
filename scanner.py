@@ -253,7 +253,7 @@ def comment_state():
     global input_stream_pointer, error_raised, eof_flag
     comment = ""
     if not re.match(valid_inputs, input_stream[input_stream_pointer + 1]):
-        update_errors(current_line, "/" + input_stream[input_stream_pointer + 1])
+        update_errors(current_line, "/" + input_stream[input_stream_pointer + 1], "Invalid input")
         input_stream_pointer += 2
         error_raised = True
         return
