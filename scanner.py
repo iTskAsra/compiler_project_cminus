@@ -6,7 +6,7 @@ symbol_rexp = re.compile(r';|:|,|\[|]|\(|\)|{|\}|\+|-|\*|=|<')
 alphabet_rexp = re.compile(r'[A-Za-z]')
 num_rexp = re.compile(r'[0-9]')
 valid_inputs = re.compile(r"[A-Za-z]|[0-9]|;|:|,|\[|\]|\(|\)|{|}|\+|-|\*|=|<|==|/|\n|\r|\t|\v|\f|\s")
-keywords = re.compile(r'if|else|int|repeat|break|void|until|return')
+keywords = re.compile(r'if|else|int|repeat|break|void|until|return|endif')
 
 # scanner variables
 tokens_address = "tokens.txt"
@@ -25,7 +25,7 @@ emergency_flag = False
 lexical_errors = []
 tokens = []
 symbol_table_elements = [
-    "if", "else", "void", "int", "repeat", "break", "until", "return"
+    "if", "else", "void", "int", "repeat", "break", "until", "return", "endif"
 ]
 
 
