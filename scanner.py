@@ -79,7 +79,7 @@ def save_errors(address):
 
 
 def save_tokens(address):
-    with open(tokens_address, 'w') as f:
+    with open(address, 'w') as f:
         current_line = 1
         lines_first_token = True
         no_line_written_yet = True
