@@ -50,264 +50,141 @@ def save_syntax_errors(address):
 
 class FirstAndFollowSets:
     first_and_follow_sets = [
-        ('Program', ['EPSILON', 'int', 'void'], ['$']),
+        ('Program', ['EPSILON', 'int', 'void'],
+         ['$']),
+
         ('Declaration_list', ['int', 'void', 'EPSILON'],
          ['$', 'ID', ';', 'NUM', '(', '{', '}', 'break', 'if', 'repeat', 'return']),
+
         ('Declaration', ['int', 'void'],
          ['int', 'void', '$', '{', '}', 'break', ';', 'if', 'repeat', 'return', 'ID', '(', 'NUM']),
-        ('Declaration_initial', ['int', 'void'], ['(', ')', ',', ';', '[']),
+
+        ('Declaration_initial', ['int', 'void'],
+         ['(', ')', ',', ';', '[']),
+
         ('Declaration_prime', [';', '[', '('],
          ['int', 'void', '$', '{', 'break', ';', 'if', 'repeat', 'return', 'ID', '(', 'NUM', '}']),
+
         ('Var_declaration_prime', [';', '['],
          ['int', 'void', '$', '{', 'break', ';', 'if', 'repeat', 'return', 'ID', '(', 'NUM', '}']),
+
         ('Fun_declaration_prime', ['('],
          ['int', 'void', '$', '{', 'break', ';', 'if', 'repeat', 'return', 'ID', '(', 'NUM', '}']),
-        ('Type_specifier', ['int', 'void'], ['ID']),
-        ('Params', ['int', 'void'], [')']),
-        ('Param', ['int', 'void'], [',', ')']),
-        ('Param_list', ['int', 'void', 'EPSILON'], [')']),
-        ('Param_prime', ['[', 'EPSILON'], [',', ')']),
+
+        ('Type_specifier', ['int', 'void'],
+         ['ID']),
+
+        ('Params', ['int', 'void'],
+         [')']),
+
+        ('Param', ['int', 'void'],
+         [',', ')']),
+
+        ('Param_list', ['int', 'void', 'EPSILON'],
+         [')']),
+
+        ('Param_prime', ['[', 'EPSILON'],
+         [',', ')']),
+
         ('Compound_stmt', ['{'],
          ['int', 'void', '$', '{', 'break', ';', 'if', 'repeat', 'return', 'ID', '(', 'NUM', '}', 'endif', 'else',
           'until']),
-        ('Statement_list', ['ID', ';', 'NUM', '(', '{', 'break', 'if', 'repeat', 'return', 'EPSILON'], ['}']),
+
+        ('Statement_list', ['ID', ';', 'NUM', '(', '{', 'break', 'if', 'repeat', 'return', 'EPSILON'],
+         ['}']),
+
         ('Statement', ['ID', ';', 'NUM', '(', '{', 'break', 'if', 'repeat', 'return', 'EPSILON'],
          ['{', 'break', ';', 'if', 'repeat', 'return', 'ID', '(', 'NUM', '}', 'endif', 'else', 'until']),
-        ('Expression_stmt', ['ID', ';', 'NUM', '(', 'break', ], ["{", "break",
-                                                                 ";",
-                                                                 "if",
-                                                                 "repeat",
-                                                                 "return",
-                                                                 "ID",
-                                                                 "(",
-                                                                 "NUM",
-                                                                 "}",
-                                                                 "endif",
-                                                                 "else",
-                                                                 "until"
-                                                                 ]),
-        ('Selection_stmt', ['if'], ["{",
-                                    "break",
-                                    ";",
-                                    "if",
-                                    "repeat",
-                                    "return",
-                                    "ID",
-                                    "(",
-                                    "NUM",
-                                    "}",
-                                    "endif",
-                                    "else",
-                                    "until"]),
-        ('Else_stmt', ['endif', 'else'], ["{",
-                                          "break",
-                                          ";",
-                                          "if",
-                                          "repeat",
-                                          "return",
-                                          "ID",
-                                          "(",
-                                          "NUM",
-                                          "}",
-                                          "endif",
-                                          "else",
-                                          "until"
-                                          ]),
-        ('Iteration_stmt', ['repeat'], ["{",
-                                        "break",
-                                        ";",
-                                        "if",
-                                        "repeat",
-                                        "return",
-                                        "ID",
-                                        "(",
-                                        "NUM",
-                                        "}",
-                                        "endif",
-                                        "else",
-                                        "until"
-                                        ]),
-        ('Return_stmt', ['return'], ["{",
-                                     "break",
-                                     ";",
-                                     "if",
-                                     "repeat",
-                                     "return",
-                                     "ID",
-                                     "(",
-                                     "NUM",
-                                     "}",
-                                     "endif",
-                                     "else",
-                                     "until"
-                                     ]),
-        ('Return_stmt_prime', ['ID', ';', 'NUM', '('], ["{",
-                                                        "break",
-                                                        ";",
-                                                        "if",
-                                                        "repeat",
-                                                        "return",
-                                                        "ID",
-                                                        "(",
-                                                        "NUM",
-                                                        "}",
-                                                        "endif",
-                                                        "else",
-                                                        "until"
-                                                        ]),
-        ('Expression', ['ID', 'NUM', '('], [";",
-                                            ")",
-                                            "]",
-                                            ","
-                                            ]),
-        ('B', ['ID', '[', 'NUM', '(', '<', '==', '+', '-', '*', 'EPSILON'], [";",
-                                                                             ")",
-                                                                             "]",
-                                                                             ","
-                                                                             ]),
-        ('H', ['ID', 'NUM', '(', '<', '==', '+', '-', '*', 'EPSILON'], [";",
-                                                                        ")",
-                                                                        "]",
-                                                                        ","
-                                                                        ]),
-        ('Simple_expression_zegond', ['NUM', '('], [";",
-                                                    ")",
-                                                    "]",
-                                                    ","
-                                                    ]),
-        ('Simple_expression,prime', ['(', '<', '+', '-', '*', '==', 'EPSILON'], [";",
-                                                                                 ")",
-                                                                                 "]",
-                                                                                 ","
-                                                                                 ]),
-        ('C', ['<', '==', 'EPSILON'], [";",
-                                       ")",
-                                       "]",
-                                       ","
-                                       ]),
-        ('Relop', ['<', '=='], ["(",
-                                "ID",
-                                "NUM"
-                                ]),
-        ('Additive_expression', ['ID', 'NUM', '('], [";",
-                                                     ")",
-                                                     "]",
-                                                     ","
-                                                     ]),
-        ('Additive_expression_prime', ['(', '+', '-', '*', 'EPSILON'], ["<",
-                                                                        "==",
-                                                                        ";",
-                                                                        ")",
-                                                                        "]",
-                                                                        ","
-                                                                        ]),
-        ('Additive_expression_zegond', ['NUM', '('], ["<",
-                                                      "==",
-                                                      ";",
-                                                      ")",
-                                                      "]",
-                                                      ","
-                                                      ]),
-        ('D', ['+', '-', 'EPSILON'], ["<",
-                                      "==",
-                                      ";",
-                                      ")",
-                                      "]",
-                                      ","
-                                      ]),
-        ('Addop', ['+', '-'], ["(",
-                               "ID",
-                               "NUM"
-                               ]),
-        ('Term', ['ID', 'NUM', '('], ["+",
-                                      "-",
-                                      ";",
-                                      ")",
-                                      "<",
-                                      "==",
-                                      "]",
-                                      ","
-                                      ]),
-        ('Term_prime', ['(', '*', 'EPSILON'], ["+",
-                                               "-",
-                                               "<",
-                                               "==",
-                                               ";",
-                                               ")",
-                                               "]",
-                                               ","
-                                               ]),
-        ('Term_zegond', ['NUM', '('], ["+",
-                                       "-",
-                                       "<",
-                                       "==",
-                                       ";",
-                                       ")",
-                                       "]",
-                                       ","
-                                       ]),
-        ('G', ['*', 'EPSILON'], ["+",
-                                 "-",
-                                 "<",
-                                 "==",
-                                 ";",
-                                 ")",
-                                 "]",
-                                 ","
-                                 ]),
-        ('Factor', ['ID', 'NUM', '('], ["*",
-                                        "+",
-                                        "-",
-                                        ";",
-                                        ")",
-                                        "<",
-                                        "==",
-                                        "]",
-                                        ","
-                                        ]),
-        ('Var_call_prime', ['[', '{', 'EPSILON'], ["*",
-                                                   "+",
-                                                   "-",
-                                                   ";",
-                                                   ")",
-                                                   "<",
-                                                   "==",
-                                                   "]",
-                                                   ","
-                                                   ]),
-        ('Var_prime', ['[', 'EPSILON'], ["*",
-                                         "+",
-                                         "-",
-                                         ";",
-                                         ")",
-                                         "<",
-                                         "==",
-                                         "]",
-                                         ","
-                                         ]),
-        ('Factor_prime', ['(', 'EPSILON'], ["*",
-                                            "+",
-                                            "-",
-                                            "<",
-                                            "==",
-                                            ";",
-                                            ")",
-                                            "]",
-                                            ","
-                                            ]),
-        ('Factor_zegond', ['NUM', '('], ["*",
-                                         "+",
-                                         "-",
-                                         "<",
-                                         "==",
-                                         ";",
-                                         ")",
-                                         "]",
-                                         ","
-                                         ]),
-        ('Args', ['ID', 'NUM', '(', 'EPSILON'], [')']),
-        ('Arg_list', ['ID', 'NUM', '('], [')']),
-        ('Arg_list_prime', [',', 'EPSILON'], [')'])
+
+        ('Expression_stmt', ['ID', ';', 'NUM', '(', 'break', ],
+         ["{", "break", ";", "if", "repeat", "return", "ID", "(", "NUM", "}", "endif", "else", "until"]),
+
+        ('Selection_stmt', ['if'],
+         ["{", "break", ";", "if", "repeat", "return", "ID", "(", "NUM", "}", "endif", "else", "until"]),
+
+        ('Else_stmt', ['endif', 'else'],
+         ["{", "break", ";", "if", "repeat", "return", "ID", "(", "NUM", "}", "endif", "else", "until"]),
+
+        ('Iteration_stmt', ['repeat'],
+         ["{", "break", ";", "if", "repeat", "return", "ID", "(", "NUM", "}", "endif", "else", "until"]),
+
+        ('Return_stmt', ['return'],
+         ["{", "break", ";", "if", "repeat", "return", "ID", "(", "NUM", "}", "endif", "else", "until"]),
+
+        ('Return_stmt_prime', ['ID', ';', 'NUM', '('],
+         ["{", "break", ";", "if", "repeat", "return", "ID", "(", "NUM", "}", "endif", "else", "until"]),
+
+        ('Expression', ['ID', 'NUM', '('],
+         [";", ")", "]", ","]),
+
+        ('B', ['ID', '[', 'NUM', '(', '<', '==', '+', '-', '*', 'EPSILON'],
+         [";", ")", "]", ","]),
+
+        ('H', ['ID', 'NUM', '(', '<', '==', '+', '-', '*', 'EPSILON'],
+         [";", ")", "]", ","]),
+
+        ('Simple_expression_zegond', ['NUM', '('],
+         [";", ")", "]", ","]),
+
+        ('Simple_expression,prime', ['(', '<', '+', '-', '*', '==', 'EPSILON'],
+         [";", ")", "]", ","]),
+
+        ('C', ['<', '==', 'EPSILON'],
+         [";", ")", "]", ","]),
+
+        ('Relop', ['<', '=='],
+         ["(", "ID", "NUM"]),
+
+        ('Additive_expression', ['ID', 'NUM', '('],
+         [";", ")", "]", ","]),
+
+        ('Additive_expression_prime', ['(', '+', '-', '*', 'EPSILON'],
+         ["<", "==", ";", ")", "]", ","]),
+
+        ('Additive_expression_zegond', ['NUM', '('],
+         ["<", "==", ";", ")", "]", ","]),
+
+        ('D', ['+', '-', 'EPSILON'],
+         ["<", "==", ";", ")", "]", ","]),
+
+        ('Addop', ['+', '-'],
+         ["(", "ID", "NUM"]),
+
+        ('Term', ['ID', 'NUM', '('],
+         ["+", "-", ";", ")", "<", "==", "]", ","]),
+
+        ('Term_prime', ['(', '*', 'EPSILON'],
+         ["+", "-", "<", "==", ";", ")", "]", ","]),
+
+        ('Term_zegond', ['NUM', '('],
+         ["+", "-", "<", "==", ";", ")", "]", ","]),
+
+        ('G', ['*', 'EPSILON'],
+         ["+", "-", "<", "==", ";", ")", "]", ","]),
+
+        ('Factor', ['ID', 'NUM', '('],
+         ["*", "+", "-", ";", ")", "<", "==", "]", ","]),
+
+        ('Var_call_prime', ['[', '{', 'EPSILON'],
+         ["*", "+", "-", ";", ")", "<", "==", "]", ","]),
+
+        ('Var_prime', ['[', 'EPSILON'],
+         ["*", "+", "-", ";", ")", "<", "==", "]", ","]),
+
+        ('Factor_prime', ['(', 'EPSILON'],
+         ["*", "+", "-", "<", "==", ";", ")", "]", ","]),
+
+        ('Factor_zegond', ['NUM', '('],
+         ["*", "+", "-", "<", "==", ";", ")", "]", ","]),
+
+        ('Args', ['ID', 'NUM', '(', 'EPSILON'],
+         [')']),
+
+        ('Arg_list', ['ID', 'NUM', '('],
+         [')']),
+
+        ('Arg_list_prime', [',', 'EPSILON'],
+         [')'])
     ]
 
     def is_token_in_firsts(self, non_terminal, terminal):
