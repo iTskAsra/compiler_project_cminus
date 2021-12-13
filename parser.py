@@ -206,6 +206,7 @@ class FirstAndFollowSets:
         return False
 
 
+# in this compiler, the prediction sets are not used but the class is implemented anyways.
 class PredictSets:
     prediction_sets = [
         ('Program', []),
@@ -264,3 +265,6 @@ class PredictSets:
                         return True
 
         return False
+
+
+fafs = FirstAndFollowSets()
