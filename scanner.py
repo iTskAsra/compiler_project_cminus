@@ -21,6 +21,7 @@ terminate_flag = False
 eof_flag = False
 unseen_token = False
 error_raised = False
+emergency_flag = False
 lexical_errors = []
 tokens = []
 symbol_table_elements = [
@@ -302,10 +303,13 @@ def comment_state():
 
 
 def get_next_token():
-    global unseen_token, new_token, eof_flag, terminate_flag, current_line
+    global unseen_token, new_token, eof_flag, terminate_flag, current_line, emergency_flag
     while not unseen_token:
         start_state()
     unseen_token = False
-    if eof_flag:
+    if emergency_flag:
         return [current_line, "$", "EOP"]
+    if eof_flag:
+        return new_token
+        emergency_flag = True
     return new_token

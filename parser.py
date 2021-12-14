@@ -1,5 +1,6 @@
 from anytree import Node, RenderTree
 import scanner
+import re
 
 parsed_tree = Node("Program")
 token = []
@@ -8,7 +9,9 @@ syntax_errors_address = "syntax_errors.txt"
 syntax_errors = []
 error_raised = False
 current_line = 1
+token_popped = True
 
+valid_first = re.compile(r'if|else|int|repeat|break|void|until|return|endif|ID|NUM')
 
 def get_token_line():
     return token[0]
@@ -193,6 +196,8 @@ class FirstAndFollowSets:
                 for first in pair[1]:
                     if first == terminal:
                         return True
+        if re.match(valid_first, terminal):
+            return True
 
         return False
 
@@ -345,4 +350,82 @@ class TransitionDiagrams:
     ]
 
 
+
 fafs = FirstAndFollowSets()
+td = TransitionDiagrams()
+
+
+def initiate_parsing():
+    scanner.initiate_lexical_errors_file(scanner.lex_errors_address)
+    scanner.get_input_stream_from_input(scanner.input_address)
+    children = []
+    for edge in td.diagram_tuples[0][1][0]:
+        if edge is not None:
+            new_node = parse_diagram(edge)
+            if new_node is not None:
+                children.append(new_node)
+    parsed_tree.children = children
+
+
+def parse_diagram(diagram):
+    global token_popped
+    if token_popped:
+        get_new_token()
+        token_popped = False
+    diagram_node = Node(f'{diagram[0]}')
+    if diagram[1] == 'T':
+        print(diagram)
+        if get_token() == diagram[0] or get_token_type() == diagram[0]:
+            if get_token() == diagram[0] or get_token_type() == diagram[0]:
+                diagram_node.name = f'{get_token_type()}, {get_token()}'
+                token_popped = True
+                return diagram_node
+            else:
+                diagram_node.name = '$'
+                token_popped = True
+                return diagram_node
+        else:
+            update_syntax_errors(get_token_line(), diagram[0], 'missing')
+            return None
+    else:
+        children = []
+        for sequence in td.diagram_tuples:
+            if diagram[0] == sequence[0]:
+                print(diagram[0])
+                for route in sequence[1]:
+                    if route[0][1] == 'NT' or route[0][1] == 'T':
+                        print('ayo')
+                        if fafs.is_token_in_firsts(route[0][0], get_token()) or fafs.is_token_in_firsts(route[0][0], get_token_type()):
+                            print('kirekhar')
+                            for edge in route:
+                                if edge is not None:
+                                    new_node = parse_diagram(edge)
+                                    #print(edge)
+                                    #print(new_node)
+                                    #print(token)
+                                    #print('\n')
+                                    if new_node is not None:
+                                        children.append(new_node)
+                            if children:
+                                diagram_node.children = children
+                                return diagram_node
+                        elif fafs.is_token_in_follows(route[0][0], get_token()) or fafs.is_token_in_follows(route[0][0], get_token_type()):
+                            if fafs.is_token_in_firsts(route[0][0], 'EPSILON'):
+                                diagram_node.children = [Node('epsilon')]
+                                return diagram_node
+                            else:
+                                update_syntax_errors(get_token_line(), route[0][0], 'missing')
+                                return None
+                        else:
+                            if get_token_type() == 'NUM' or get_token_type() == 'ID':
+                                update_syntax_errors(get_token_line(), get_token_type(), 'illegal')
+                            else:
+                                update_syntax_errors(get_token_line(), get_token(), 'illegal')
+                            token_popped = True
+                            return None
+
+initiate_parsing()
+#print(RenderTree(parsed_tree))
+
+
+save_parsed_tree(parsed_tree_address)
