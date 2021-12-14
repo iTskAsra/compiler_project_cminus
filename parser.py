@@ -192,14 +192,13 @@ class FirstAndFollowSets:
     ]
 
     def is_token_in_firsts(self, non_terminal, terminal):
-        print(non_terminal, terminal)
-        print('\n')
+        result = False
         for pair in self.first_and_follow_sets:
             if pair[0] == non_terminal:
                 for first in pair[1]:
                     if first == terminal:
-                        return True
-        return False
+                        result = True
+        return result
 
     def is_token_in_follows(self, non_terminal, terminal):
         for pair in self.first_and_follow_sets:
@@ -393,13 +392,10 @@ def parse_diagram(diagram):
                 for route in sequence[1]:
                     if route[0][1] == 'NT':
                         if fafs.is_token_in_firsts(route[0][0], get_token()) or fafs.is_token_in_firsts(route[0][0], get_token_type()):
+                            #print(route)
                             for edge in route:
                                 if edge is not None:
                                     new_node = parse_diagram(edge)
-                                    # print(edge)
-                                    # print(new_node)
-                                    # print(token)
-                                    # print('\n')
                                     if new_node is not None:
                                         children.append(new_node)
                             if children:
@@ -419,6 +415,26 @@ def parse_diagram(diagram):
                                 update_syntax_errors(get_token_line(), get_token(), 'illegal')
                             token_popped = True
                             return None
+                    else:
+                        if route[0][0] == get_token() or route[0][0] == get_token_type():
+                            for edge in route:
+                                new_node = parse_diagram(edge)
+                                if new_node is not None:
+                                    children.append(new_node)
+                                print(children)
+                            if children:
+                                diagram_node.children = children
+                                return diagram_node
+                        elif route[0][0] == 'EPSILON':
+                            diagram_node.children = [Node('epsilon')]
+                            return diagram_node
+                        else:
+                            if get_token_type() == 'NUM' or get_token_type() == 'ID':
+                                update_syntax_errors(get_token_line(), get_token_type(), 'illegal')
+                            else:
+                                update_syntax_errors(get_token_line(), get_token(), 'illegal')
+                            token_popped = True
+                            return None
 
 
 
@@ -428,5 +444,4 @@ initiate_parsing()
 
 save_parsed_tree(parsed_tree_address)
 
-print(fafs.is_token_in_firsts('Fun_declaration_prime', '('))
-print(fafs.is_token_in_firsts('(', '('))
+
