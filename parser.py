@@ -13,6 +13,7 @@ token_popped = True
 
 valid_first = re.compile(r'if|else|int|repeat|break|void|until|return|endif|ID|NUM')
 
+
 def get_token_line():
     return token[0]
 
@@ -31,7 +32,7 @@ def get_token_type():
 
 
 def save_parsed_tree(address):
-    with open(address, 'w') as f:
+    with open(address, 'w', encoding="utf-8") as f:
         for pre, fill, node in RenderTree(parsed_tree):
             f.write("%s%s\n" % (pre, node.name))
 
@@ -191,14 +192,13 @@ class FirstAndFollowSets:
     ]
 
     def is_token_in_firsts(self, non_terminal, terminal):
+        print(non_terminal, terminal)
+        print('\n')
         for pair in self.first_and_follow_sets:
             if pair[0] == non_terminal:
                 for first in pair[1]:
                     if first == terminal:
                         return True
-        if re.match(valid_first, terminal):
-            return True
-
         return False
 
     def is_token_in_follows(self, non_terminal, terminal):
@@ -278,77 +278,77 @@ class TransitionDiagrams:
                               (('EPSILON', 'T'),)]),
         ('Declaration', [(('Declaration_initial', 'NT'), ('Declaration_prime', 'NT'))]),
         ('Declaration_initial', [(('Type_specifier', 'NT'), ('ID', 'T'))]),
-        ('Declaration_prime', [(('Fun_declaration_prime', 'NT'), ),
-                               (('Var_declaration_prime', 'NT'), )]),
+        ('Declaration_prime', [(('Fun_declaration_prime', 'NT'),),
+                               (('Var_declaration_prime', 'NT'),)]),
         ('Var_declaration_prime', [(('[', 'T'), ('NUM', 'T'), (']', 'T'), (';', 'T')),
-                                   ((';', 'T'), )]),
+                                   ((';', 'T'),)]),
         ('Fun_declaration_prime', [(('(', 'T'), ('Params', 'NT'), (')', 'T'), ('Compound_stmt', 'NT'))]),
-        ('Type_specifier', [(('int', 'T'), ),
-                            (('void', 'T'), )]),
+        ('Type_specifier', [(('int', 'T'),),
+                            (('void', 'T'),)]),
         ('Params', [(('int', 'T'), ('ID', 'T'), ('Param_prime', 'NT'), ('Param_list', 'NT')),
-                    (('void', 'T'), )]),
+                    (('void', 'T'),)]),
         ('Param_list', [((',', 'T'), ('Param', 'NT'), ('Param_list', 'NT')),
-                        (('EPSILON', 'T'), )]),
-        ('Param', [(('Declaration_initial', 'NT'), )]),
+                        (('EPSILON', 'T'),)]),
+        ('Param', [(('Declaration_initial', 'NT'),)]),
         ('Param_prime', [(('[', 'T'), (']', 'T')),
-                         (('EPSILON', 'T'), )]),
+                         (('EPSILON', 'T'),)]),
         ('Compound_stmt', [(('{', 'T'), ('Declaration_list', 'NT'), ('Statement_list', 'NT'), ('}', 'T'))]),
         ('Statement_list', [(('Statement', 'NT'), ('Statement_list', 'NT')),
-                            (('EPSILON', 'T'), )]),
-        ('Statement', [(('Expression_stmt', 'NT'), ('Compound_stmt', 'NT'), ('Selection_stmt', 'NT'), ('Iteration_stmt', 'NT'), ('Return_stmt', 'NT'))]),
+                            (('EPSILON', 'T'),)]),
+        ('Statement',
+         [(('Expression_stmt', 'NT'), ('Compound_stmt', 'NT'), ('Selection_stmt', 'NT'), ('Iteration_stmt', 'NT'), ('Return_stmt', 'NT'))]),
         ('Expression_stmt', [(('Expression', 'NT'), (';', 'T')),
                              (('break', 'T'), (';', 'T')),
-                             ((';', 'T'), )]),
+                             ((';', 'T'),)]),
         ('Selection_stmt', [(('if', 'T'), ('(', 'T'), ('Expression', 'NT'), (')', 'T'), ('Statement', 'NT'), ('Else_stmt', 'NT'))]),
         ('Else_stmt', [(('else', 'T'), ('Statement', 'NT'), ('endif', 'T')),
-                       (('endif', 'T'), )]),
+                       (('endif', 'T'),)]),
         ('Iteration_stmt', [(('repeat', 'T'), ('Statement', 'NT'), ('until', 'T'), ('(', 'T'), ('Expression', 'NT'), (')', 'T'))]),
         ('Return_stmt', [(('return', 'T'), ('Return_stmt_prime', 'NT'))]),
         ('Return_stmt_prime', [(('Expression', 'NT'), (';', 'T')),
-                               ((';', 'T'), )]),
+                               ((';', 'T'),)]),
         ('Expression', [(('ID', 'T'), ('B', 'NT')),
-                        (('Simple_expression_zegond', 'NT'), )]),
+                        (('Simple_expression_zegond', 'NT'),)]),
         ('B', [(('[', 'T'), ('Expression', 'NT'), (']', 'T'), ('H', 'NT')),
                (('=', 'T'), ('Expression', 'NT')),
-               (('Simple_expression_prime', 'NT'), )]),
+               (('Simple_expression_prime', 'NT'),)]),
         ('H', [(('=', 'T'), ('Expression', 'NT')),
                (('G', 'NT'), ('D', 'NT'), ('C', 'NT'))]),
         ('Simple_expression_zegond', [(('Additive_expression_zegond', 'NT'), ('C', 'NT'))]),
         ('Simple_expression_prime', [(('Additive_expression_prime', 'NT'), ('C', 'NT'))]),
         ('C', [(('Relop', 'NT'), ('Additive_expression', 'NT')),
-               (('EPSILON', 'T'), )]),
-        ('Relop', [(('<', 'T'), ),
-                   (('==', 'T'), )]),
+               (('EPSILON', 'T'),)]),
+        ('Relop', [(('<', 'T'),),
+                   (('==', 'T'),)]),
         ('Additive_expression', [(('Term', 'NT'), ('D', 'NT'))]),
         ('Additive_expression_prime', [(('Term_prime', 'NT'), ('D', 'NT'))]),
         ('Additive_expression_zegond', [(('Term_zegond', 'NT'), ('D', 'NT'))]),
         ('D', [(('Addop', 'NT'), ('Term', 'NT'), ('D', 'NT')),
-               (('EPSILON', 'T'), )]),
-        ('Addop', [(('+', 'T'), ),
-                   (('-', 'T'), )]),
+               (('EPSILON', 'T'),)]),
+        ('Addop', [(('+', 'T'),),
+                   (('-', 'T'),)]),
         ('Term', [(('Factor', 'NT'), ('G', 'NT'))]),
         ('Term_prime', [(('Factor_prime', 'NT'), ('G', 'NT'))]),
         ('Term_zegond', [(('Factor_prime', 'NT'), ('G', 'NT'))]),
         ('G', [(('*', 'T'), ('Factor', 'NT'), ('G', 'NT')),
-               (('EPSILON', 'T'), )]),
+               (('EPSILON', 'T'),)]),
         ('Factor', [(('(', 'T'), ('Expression', 'NT'), (')', 'T')),
                     (('ID', 'T'), ('Var_call_prime', 'NT')),
-                    (('NUM', 'T'), )]),
+                    (('NUM', 'T'),)]),
         ('Var_call_prime', [(('(', 'T'), ('Args', 'NT'), (')', 'T')),
-                            (('Var_prime', 'NT'), )]),
+                            (('Var_prime', 'NT'),)]),
         ('Var_prime', [(('[', 'T'), ('Expression', 'NT'), (']', 'T')),
-                       (('EPSILON', 'T'), )]),
+                       (('EPSILON', 'T'),)]),
         ('Factor_prime', [(('(', 'T'), ('Args', 'NT'), (')', 'T')),
-                          (('EPSILON', 'T'), )]),
+                          (('EPSILON', 'T'),)]),
         ('Factor_zegond', [(('(', 'T'), ('Expression', 'NT'), (')', 'T')),
-                           (('NUM', 'T'), )]),
-        ('Args', [(('Args_list', 'NT'), ),
-                  (('EPSILON', 'T'), )]),
+                           (('NUM', 'T'),)]),
+        ('Args', [(('Args_list', 'NT'),),
+                  (('EPSILON', 'T'),)]),
         ('Arg_list', [(('Expression', 'NT'), ('Args_list_prime', 'NT'))]),
         ('Arg_list_prime', [((',', 'T'), ('Expression', 'NT'), ('Arg_list_prime', 'NT')),
-                            (('EPSILON', 'T'), )])
+                            (('EPSILON', 'T'),)])
     ]
-
 
 
 fafs = FirstAndFollowSets()
@@ -374,7 +374,6 @@ def parse_diagram(diagram):
         token_popped = False
     diagram_node = Node(f'{diagram[0]}')
     if diagram[1] == 'T':
-        print(diagram)
         if get_token() == diagram[0] or get_token_type() == diagram[0]:
             if get_token() == diagram[0] or get_token_type() == diagram[0]:
                 diagram_node.name = f'{get_token_type()}, {get_token()}'
@@ -391,19 +390,16 @@ def parse_diagram(diagram):
         children = []
         for sequence in td.diagram_tuples:
             if diagram[0] == sequence[0]:
-                print(diagram[0])
                 for route in sequence[1]:
-                    if route[0][1] == 'NT' or route[0][1] == 'T':
-                        print('ayo')
+                    if route[0][1] == 'NT':
                         if fafs.is_token_in_firsts(route[0][0], get_token()) or fafs.is_token_in_firsts(route[0][0], get_token_type()):
-                            print('kirekhar')
                             for edge in route:
                                 if edge is not None:
                                     new_node = parse_diagram(edge)
-                                    #print(edge)
-                                    #print(new_node)
-                                    #print(token)
-                                    #print('\n')
+                                    # print(edge)
+                                    # print(new_node)
+                                    # print(token)
+                                    # print('\n')
                                     if new_node is not None:
                                         children.append(new_node)
                             if children:
@@ -424,8 +420,13 @@ def parse_diagram(diagram):
                             token_popped = True
                             return None
 
+
+
 initiate_parsing()
-#print(RenderTree(parsed_tree))
+# print(RenderTree(parsed_tree))
 
 
 save_parsed_tree(parsed_tree_address)
+
+print(fafs.is_token_in_firsts('Fun_declaration_prime', '('))
+print(fafs.is_token_in_firsts('(', '('))
