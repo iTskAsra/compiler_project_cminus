@@ -10,6 +10,7 @@ syntax_errors = []
 error_raised = False
 current_line = 1
 token_popped = True
+errors_raised = False
 
 valid_first = re.compile(r'if|else|int|repeat|break|void|until|return|endif|ID|NUM')
 
@@ -43,6 +44,8 @@ def initialize_errors_file(address):
 
 
 def update_syntax_errors(line, terminal, error_description):
+    global errors_raised
+    errors_raised = True
     syntax_errors.append([line, terminal, error_description])
 
 
@@ -311,10 +314,12 @@ class TransitionDiagrams:
         ('Expression-stmt', [(('Expression', 'NT'), (';', 'T')),
                              (('break', 'T'), (';', 'T')),
                              ((';', 'T'),)]),
-        ('Selection-stmt', [(('if', 'T'), ('(', 'T'), ('Expression', 'NT'), (')', 'T'), ('Statement', 'NT'), ('Else-stmt', 'NT'))]),
+        ('Selection-stmt',
+         [(('if', 'T'), ('(', 'T'), ('Expression', 'NT'), (')', 'T'), ('Statement', 'NT'), ('Else-stmt', 'NT'))]),
         ('Else-stmt', [(('else', 'T'), ('Statement', 'NT'), ('endif', 'T')),
                        (('endif', 'T'),)]),
-        ('Iteration-stmt', [(('repeat', 'T'), ('Statement', 'NT'), ('until', 'T'), ('(', 'T'), ('Expression', 'NT'), (')', 'T'))]),
+        ('Iteration-stmt',
+         [(('repeat', 'T'), ('Statement', 'NT'), ('until', 'T'), ('(', 'T'), ('Expression', 'NT'), (')', 'T'))]),
         ('Return-stmt', [(('return', 'T'), ('Return-stmt-prime', 'NT'))]),
         ('Return-stmt-prime', [(('Expression', 'NT'), (';', 'T')),
                                ((';', 'T'),)]),
@@ -366,8 +371,6 @@ fafs = FirstAndFollowSets()
 td = TransitionDiagrams()
 
 
-
-
 def initiate_parsing():
     scanner.initiate_lexical_errors_file(scanner.lex_errors_address)
     scanner.get_input_stream_from_input(scanner.input_address)
@@ -403,14 +406,15 @@ def parse_diagram(diagram):
                 token_popped = True
                 return diagram_node
         else:
-           update_syntax_errors(get_token_line(), diagram[0], 'missing')
-           return None
+            update_syntax_errors(get_token_line(), diagram[0], 'missing')
+            return None
     else:
         children = []
         for sequence in td.diagram_tuples:
             if diagram[0] == sequence[0]:
                 for route in sequence[1]:
-                    if fafs.is_token_in_firsts(route[0][0], get_token()) or fafs.is_token_in_firsts(route[0][0], get_token_type()):
+                    if fafs.is_token_in_firsts(route[0][0], get_token()) or fafs.is_token_in_firsts(route[0][0],
+                                                                                                    get_token_type()):
                         for edge in route:
                             new_node = parse_diagram(edge)
                             if new_node is not None:
@@ -421,7 +425,8 @@ def parse_diagram(diagram):
                             return diagram_node
 
                 for route in sequence[1]:
-                    if fafs.is_token_in_follows(diagram[0], get_token()) or fafs.is_token_in_follows(diagram[0], get_token_type()):
+                    if fafs.is_token_in_follows(diagram[0], get_token()) or fafs.is_token_in_follows(diagram[0],
+                                                                                                     get_token_type()):
                         if fafs.is_token_in_firsts(diagram[0], 'EPSILON'):
                             if route[0][0] == 'EPSILON':
                                 diagram_node.children = [Node('epsilon')]
@@ -436,7 +441,8 @@ def parse_diagram(diagram):
                         diagram_node.children = children
                         return diagram_node
 
-                if fafs.is_token_in_follows(sequence[0], get_token()) or fafs.is_token_in_follows(sequence[0], get_token_type()):
+                if fafs.is_token_in_follows(sequence[0], get_token()) or fafs.is_token_in_follows(sequence[0],
+                                                                                                  get_token_type()):
                     update_syntax_errors(get_token_line(), fafs.get_a_first(sequence[0]), 'missing')
                     return None
 
@@ -448,8 +454,10 @@ def parse_diagram(diagram):
                     return None
 
 
+initialize_errors_file(syntax_errors_address)
 initiate_parsing()
 
 save_parsed_tree(parsed_tree_address)
-save_syntax_errors(syntax_errors_address)
 
+if errors_raised:
+    save_syntax_errors(syntax_errors_address)
