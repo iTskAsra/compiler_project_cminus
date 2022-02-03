@@ -54,7 +54,7 @@ def save_syntax_errors(address):
 
 class FirstAndFollowSets:
     first_and_follow_sets = [
-        ('Program', ['EPSILON', 'int', 'void'],
+        ('Program', ['EPSILON', 'int', 'void', '$'],
          ['$']),
 
         ('Declaration-list', ['int', 'void', 'EPSILON'],
@@ -130,7 +130,7 @@ class FirstAndFollowSets:
         ('Simple-expression-zegond', ['NUM', '('],
          [";", ")", "]", ","]),
 
-        ('Simple-expression,prime', ['(', '<', '+', '-', '*', '==', 'EPSILON'],
+        ('Simple-expression-prime', ['(', '<', '+', '-', '*', '==', 'EPSILON'],
          [";", ")", "]", ","]),
 
         ('C', ['<', '==', 'EPSILON'],
@@ -198,6 +198,9 @@ class FirstAndFollowSets:
                 for first in pair[1]:
                     if first == terminal:
                         result = True
+
+        if terminal == non_terminal:
+            result = True
         return result
 
     def is_token_in_follows(self, non_terminal, terminal):
@@ -208,6 +211,11 @@ class FirstAndFollowSets:
                         return True
 
         return False
+
+    def get_a_first(self, non_terminal):
+        for pair in self.first_and_follow_sets:
+            if pair[0] == non_terminal:
+                return pair[1][0]
 
 
 # in this compiler, the prediction sets are not used but the class is implemented anyways.
@@ -295,7 +303,11 @@ class TransitionDiagrams:
         ('Statement-list', [(('Statement', 'NT'), ('Statement-list', 'NT')),
                             (('EPSILON', 'T'),)]),
         ('Statement',
-         [(('Expression-stmt', 'NT'), ('Compound-stmt', 'NT'), ('Selection-stmt', 'NT'), ('Iteration-stmt', 'NT'), ('Return-stmt', 'NT'))]),
+         [(('Expression-stmt', 'NT'),)
+             , (('Compound-stmt', 'NT'),)
+             , (('Selection-stmt', 'NT'),)
+             , (('Iteration-stmt', 'NT'),)
+             , (('Return-stmt', 'NT'),)]),
         ('Expression-stmt', [(('Expression', 'NT'), (';', 'T')),
                              (('break', 'T'), (';', 'T')),
                              ((';', 'T'),)]),
@@ -328,7 +340,7 @@ class TransitionDiagrams:
                    (('-', 'T'),)]),
         ('Term', [(('Factor', 'NT'), ('G', 'NT'))]),
         ('Term-prime', [(('Factor-prime', 'NT'), ('G', 'NT'))]),
-        ('Term-zegond', [(('Factor-prime', 'NT'), ('G', 'NT'))]),
+        ('Term-zegond', [(('Factor-zegond', 'NT'), ('G', 'NT'))]),
         ('G', [(('*', 'T'), ('Factor', 'NT'), ('G', 'NT')),
                (('EPSILON', 'T'),)]),
         ('Factor', [(('(', 'T'), ('Expression', 'NT'), (')', 'T')),
@@ -342,7 +354,7 @@ class TransitionDiagrams:
                           (('EPSILON', 'T'),)]),
         ('Factor-zegond', [(('(', 'T'), ('Expression', 'NT'), (')', 'T')),
                            (('NUM', 'T'),)]),
-        ('Args', [(('Args-list', 'NT'),),
+        ('Args', [(('Arg-list', 'NT'),),
                   (('EPSILON', 'T'),)]),
         ('Arg-list', [(('Expression', 'NT'), ('Args-list-prime', 'NT'))]),
         ('Arg-list-prime', [((',', 'T'), ('Expression', 'NT'), ('Arg-list-prime', 'NT')),
@@ -352,6 +364,8 @@ class TransitionDiagrams:
 
 fafs = FirstAndFollowSets()
 td = TransitionDiagrams()
+
+
 
 
 def initiate_parsing():
@@ -367,76 +381,75 @@ def initiate_parsing():
 
 
 def parse_diagram(diagram):
+    print(f'parsing: {diagram}')
     global token_popped
     if token_popped:
         get_new_token()
+        print(f'new token is: {get_token()}')
         token_popped = False
     diagram_node = Node(f'{diagram[0]}')
     if diagram[1] == 'T':
+        if diagram[0] == 'EPSILON':
+            diagram_node.children = [Node('epsilon')]
+            return diagram_node
         if get_token() == diagram[0] or get_token_type() == diagram[0]:
-            if get_token() == diagram[0] or get_token_type() == diagram[0]:
-                diagram_node.name = f'({get_token_type()}, {get_token()})'
-                token_popped = True
-                return diagram_node
-            else:
+            print(f'parsed {get_token()}')
+            if get_token() == '$':
                 diagram_node.name = '$'
                 token_popped = True
                 return diagram_node
+            else:
+                diagram_node.name = f'({get_token_type()}, {get_token()})'
+                token_popped = True
+                return diagram_node
         else:
-            update_syntax_errors(get_token_line(), diagram[0], 'missing')
-            return None
+           update_syntax_errors(get_token_line(), diagram[0], 'missing')
+           return None
     else:
         children = []
         for sequence in td.diagram_tuples:
             if diagram[0] == sequence[0]:
                 for route in sequence[1]:
-                    if route[0][1] == 'NT':
-                        if fafs.is_token_in_firsts(route[0][0], get_token()) or fafs.is_token_in_firsts(route[0][0], get_token_type()):
-                            for edge in route:
-                                if edge is not None:
-                                    new_node = parse_diagram(edge)
-                                    if new_node is not None:
-                                        children.append(new_node)
-                            if children:
-                                diagram_node.children = children
-                                return diagram_node
-                    else:
-                        if route[0][0] == get_token() or route[0][0] == get_token_type():
-                            for edge in route:
-                                new_node = parse_diagram(edge)
-                                if new_node is not None:
-                                    children.append(new_node)
-                            if children:
-                                diagram_node.children = children
-                                return diagram_node
-                        elif route[0][0] == 'EPSILON':
-                            diagram_node.children = [Node('epsilon')]
+                    if fafs.is_token_in_firsts(route[0][0], get_token()) or fafs.is_token_in_firsts(route[0][0], get_token_type()):
+                        for edge in route:
+                            new_node = parse_diagram(edge)
+                            if new_node is not None:
+                                children.append(new_node)
+
+                        if children:
+                            diagram_node.children = children
                             return diagram_node
 
-                        if get_token_type() == 'NUM' or get_token_type() == 'ID':
-                            update_syntax_errors(get_token_line(), get_token_type(), 'illegal')
-                        else:
-                            update_syntax_errors(get_token_line(), get_token(), 'illegal')
-                        token_popped = True
-                        return None
                 for route in sequence[1]:
-                    if fafs.is_token_in_follows(route[0][0], get_token()) or fafs.is_token_in_follows(route[0][0], get_token_type()):
-                        if fafs.is_token_in_firsts(route[0][0], 'EPSILON'):
-                            diagram_node.children = [Node('epsilon')]
-                            return diagram_node
-                        else:
-                            update_syntax_errors(get_token_line(), route[0][0], 'missing')
-                            return None
-                    else:
-                        if get_token_type() == 'NUM' or get_token_type() == 'ID':
-                            update_syntax_errors(get_token_line(), get_token_type(), 'illegal')
-                        else:
-                            update_syntax_errors(get_token_line(), get_token(), 'illegal')
-                        token_popped = True
-                        return None
+                    if fafs.is_token_in_follows(diagram[0], get_token()) or fafs.is_token_in_follows(diagram[0], get_token_type()):
+                        if fafs.is_token_in_firsts(diagram[0], 'EPSILON'):
+                            if route[0][0] == 'EPSILON':
+                                diagram_node.children = [Node('epsilon')]
+                                return diagram_node
+
+                for route in sequence[1]:
+                    if fafs.is_token_in_firsts(route[0][0], 'EPSILON'):
+                        for edge in route:
+                            new_node = parse_diagram(edge)
+                            if new_node is not None:
+                                children.append(new_node)
+                        diagram_node.children = children
+                        return diagram_node
+
+                if fafs.is_token_in_follows(sequence[0], get_token()) or fafs.is_token_in_follows(sequence[0], get_token_type()):
+                    update_syntax_errors(get_token_line(), fafs.get_a_first(sequence[0]), 'missing')
+                    return None
+
+                if get_token_type() == 'NUM' or get_token_type() == 'ID':
+                    update_syntax_errors(get_token_line(), get_token_type(), 'illegal')
+                else:
+                    update_syntax_errors(get_token_line(), get_token(), 'illegal')
+                    token_popped = True
+                    return None
 
 
 initiate_parsing()
 
 save_parsed_tree(parsed_tree_address)
 save_syntax_errors(syntax_errors_address)
+
