@@ -356,7 +356,7 @@ class TransitionDiagrams:
                            (('NUM', 'T'),)]),
         ('Args', [(('Arg-list', 'NT'),),
                   (('EPSILON', 'T'),)]),
-        ('Arg-list', [(('Expression', 'NT'), ('Args-list-prime', 'NT'))]),
+        ('Arg-list', [(('Expression', 'NT'), ('Arg-list-prime', 'NT'))]),
         ('Arg-list-prime', [((',', 'T'), ('Expression', 'NT'), ('Arg-list-prime', 'NT')),
                             (('EPSILON', 'T'),)])
     ]

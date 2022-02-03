@@ -310,6 +310,6 @@ def get_next_token():
     if emergency_flag:
         return [current_line, "$", "EOP"]
     if eof_flag:
-        return new_token
         emergency_flag = True
+        return [current_line, "$", "EOP"]
     return new_token
