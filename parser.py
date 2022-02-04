@@ -299,7 +299,7 @@ class TransitionDiagrams:
                     (('void', 'T'),)]),
         ('Param-list', [((',', 'T'), ('Param', 'NT'), ('Param-list', 'NT')),
                         (('EPSILON', 'T'),)]),
-        ('Param', [(('Declaration-initial', 'NT'),)]),
+        ('Param', [(('Declaration-initial', 'NT'), ('Param-prime', 'NT'))]),
         ('Param-prime', [(('[', 'T'), (']', 'T')),
                          (('EPSILON', 'T'),)]),
         ('Compound-stmt', [(('{', 'T'), ('Declaration-list', 'NT'), ('Statement-list', 'NT'), ('}', 'T'))]),
@@ -406,8 +406,11 @@ def parse_diagram(diagram):
                 token_popped = True
                 return diagram_node
         else:
-            update_syntax_errors(get_token_line(), diagram[0], 'missing')
-            return None
+            if get_token() == '$':
+                update_syntax_errors(get_token_line(), '', 'Unexpected EOF')
+            else:
+                update_syntax_errors(get_token_line(), diagram[0], 'missing')
+                return None
     else:
         children = []
         for sequence in td.diagram_tuples:
@@ -443,15 +446,12 @@ def parse_diagram(diagram):
 
                 if fafs.is_token_in_follows(sequence[0], get_token()) or fafs.is_token_in_follows(sequence[0],
                                                                                                   get_token_type()):
-                    update_syntax_errors(get_token_line(), fafs.get_a_first(sequence[0]), 'missing')
+                    update_syntax_errors(get_token_line(), sequence[0], 'missing')
                     return None
-
-                if get_token_type() == 'NUM' or get_token_type() == 'ID':
-                    update_syntax_errors(get_token_line(), get_token_type(), 'illegal')
                 else:
                     update_syntax_errors(get_token_line(), get_token(), 'illegal')
                     token_popped = True
-                    return None
+                    return parse_diagram(diagram)
 
 
 initialize_errors_file(syntax_errors_address)
