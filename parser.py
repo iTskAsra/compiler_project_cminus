@@ -11,6 +11,7 @@ error_raised = False
 current_line = 1
 token_popped = True
 errors_raised = False
+eop = False
 
 valid_first = re.compile(r'if|else|int|repeat|break|void|until|return|endif|ID|NUM')
 
@@ -52,7 +53,10 @@ def update_syntax_errors(line, terminal, error_description):
 def save_syntax_errors(address):
     with open(address, 'w') as f:
         for error in syntax_errors:
-            f.write(f"#{error[0]} : syntax error, {error[2]} {error[1]}\n")
+            if error[1] == 'Unexpected EOF':
+                f.write(f'#{error[0]} : syntax error, Unexpected EOF\n')
+            else:
+                f.write(f"#{error[0]} : syntax error, {error[2]} {error[1]}\n")
 
 
 class FirstAndFollowSets:
@@ -124,10 +128,10 @@ class FirstAndFollowSets:
         ('Expression', ['ID', 'NUM', '('],
          [";", ")", "]", ","]),
 
-        ('B', ['ID', '[', 'NUM', '(', '<', '==', '+', '-', '*', 'EPSILON'],
+        ('B', ['[', '(', '<', '=', '==', '+', '-', '*', 'EPSILON'],
          [";", ")", "]", ","]),
 
-        ('H', ['ID', 'NUM', '(', '<', '==', '+', '-', '*', 'EPSILON'],
+        ('H', ['<', '==', '=', '+', '-', '*', 'EPSILON'],
          [";", ")", "]", ","]),
 
         ('Simple-expression-zegond', ['NUM', '('],
@@ -384,13 +388,17 @@ def initiate_parsing():
 
 
 def parse_diagram(diagram):
+    global eop
+    if eop:
+        return None
     print(f'parsing: {diagram}')
     global token_popped
     if token_popped:
         get_new_token()
-        print(f'new token is: {get_token()}')
+        print(f'new token is: {get_token()}: {get_token_type()}')
         token_popped = False
     diagram_node = Node(f'{diagram[0]}')
+
     if diagram[1] == 'T':
         if diagram[0] == 'EPSILON':
             diagram_node.children = [Node('epsilon')]
@@ -407,14 +415,16 @@ def parse_diagram(diagram):
                 return diagram_node
         else:
             if get_token() == '$':
-                update_syntax_errors(get_token_line(), '', 'Unexpected EOF')
+                update_syntax_errors(get_token_line(), 'Unexpected EOF', '')
             else:
                 update_syntax_errors(get_token_line(), diagram[0], 'missing')
                 return None
     else:
+
         children = []
         for sequence in td.diagram_tuples:
             if diagram[0] == sequence[0]:
+
                 for route in sequence[1]:
                     if fafs.is_token_in_firsts(route[0][0], get_token()) or fafs.is_token_in_firsts(route[0][0],
                                                                                                     get_token_type()):
@@ -436,7 +446,7 @@ def parse_diagram(diagram):
                                 return diagram_node
 
                 for route in sequence[1]:
-                    if fafs.is_token_in_firsts(route[0][0], 'EPSILON'):
+                    if fafs.is_token_in_firsts(route[0][0], 'EPSILON') and (fafs.is_token_in_follows(route[0][0], get_token()) or fafs.is_token_in_follows(route[0][0], get_token_type())):
                         for edge in route:
                             new_node = parse_diagram(edge)
                             if new_node is not None:
@@ -444,14 +454,26 @@ def parse_diagram(diagram):
                         diagram_node.children = children
                         return diagram_node
 
+                if get_token() == '$':
+                    update_syntax_errors(get_token_line(), 'Unexpected EOF', '')
+                    eop = True
+                    return None
                 if fafs.is_token_in_follows(sequence[0], get_token()) or fafs.is_token_in_follows(sequence[0],
                                                                                                   get_token_type()):
                     update_syntax_errors(get_token_line(), sequence[0], 'missing')
                     return None
                 else:
-                    update_syntax_errors(get_token_line(), get_token(), 'illegal')
-                    token_popped = True
-                    return parse_diagram(diagram)
+                    if get_token_type() == 'ID' or get_token_type() == 'NUM':
+                        if get_token_type() == 'SYMBOL':
+                            print('\n\n\nhi\n\n\n')
+                        update_syntax_errors(get_token_line(), get_token_type(), 'illegal')
+                        token_popped = True
+                        return parse_diagram(diagram)
+                    else:
+
+                        update_syntax_errors(get_token_line(), get_token(), 'illegal')
+                        token_popped = True
+                        return parse_diagram(diagram)
 
 
 initialize_errors_file(syntax_errors_address)
