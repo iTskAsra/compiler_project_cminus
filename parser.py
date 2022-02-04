@@ -416,6 +416,8 @@ def parse_diagram(diagram):
         else:
             if get_token() == '$':
                 update_syntax_errors(get_token_line(), 'Unexpected EOF', '')
+                eop = True
+                return None
             else:
                 update_syntax_errors(get_token_line(), diagram[0], 'missing')
                 return None
@@ -446,7 +448,9 @@ def parse_diagram(diagram):
                                 return diagram_node
 
                 for route in sequence[1]:
-                    if fafs.is_token_in_firsts(route[0][0], 'EPSILON') and (fafs.is_token_in_follows(route[0][0], get_token()) or fafs.is_token_in_follows(route[0][0], get_token_type())):
+                    if fafs.is_token_in_firsts(route[0][0], 'EPSILON') and (
+                            fafs.is_token_in_follows(route[0][0], get_token()) or fafs.is_token_in_follows(route[0][0],
+                                                                                                           get_token_type())):
                         for edge in route:
                             new_node = parse_diagram(edge)
                             if new_node is not None:
@@ -454,14 +458,11 @@ def parse_diagram(diagram):
                         diagram_node.children = children
                         return diagram_node
 
-                if get_token() == '$':
-                    update_syntax_errors(get_token_line(), 'Unexpected EOF', '')
-                    eop = True
-                    return None
                 if fafs.is_token_in_follows(sequence[0], get_token()) or fafs.is_token_in_follows(sequence[0],
                                                                                                   get_token_type()):
                     update_syntax_errors(get_token_line(), sequence[0], 'missing')
                     return None
+
                 else:
                     if get_token_type() == 'ID' or get_token_type() == 'NUM':
                         if get_token_type() == 'SYMBOL':

@@ -111,6 +111,7 @@ def get_input_stream_from_input(address):
     global input_stream
     with open(address, 'rb') as f:
         input_stream = (f.read(50000)).decode()
+        input_stream += '\n'
 
 
 def check_white_space(char):
@@ -156,7 +157,7 @@ def start_state():
 
 def symbol_state():
     global input_stream_pointer, error_raised, eof_flag, unseen_token
-    if not (input_stream_pointer+1 in range(len(input_stream))):
+    if not (input_stream_pointer + 1 in range(len(input_stream))):
         update_tokens(current_line, input_stream[input_stream_pointer], "SYMBOL")
         input_stream_pointer += 1
         eof_flag = True
