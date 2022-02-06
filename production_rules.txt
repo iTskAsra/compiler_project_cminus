@@ -1,0 +1,45 @@
+Program -> Declaration-list $
+Declaration-list -> Declaration Declaration-list | EPSILON
+Declaration -> Declaration-initial Declaration-prime
+Declaration-initial ->  Type-specifier #pidDeclare ID
+Declaration-prime -> Fun-declaration-prime | Var-declaration-prime
+Var-declaration-prime -> #simpleVar ; | [ #arrVar NUM ] ;
+Fun-declaration-prime -> #funcDeclare ( #argsStart Params #argsEnd ) #funDeclareEnd Compound-stmt
+Type-specifier -> #pidInt int | #pidVoid void
+Params -> #pidInt int #pidDeclare ID Param-prime Param-list | #emptyParams void
+Param-list -> , Param Param-list | EPSILON
+Param -> Declaration-initial Param-prime
+Param-prime -> #arrParam [  ] | EPSILON
+Compound-stmt -> { Declaration-list Statement-list }
+Statement-list -> Statement Statement-list | EPSILON
+Statement -> Expression-stmt | Compound-stmt | Selection-stmt | Iteration-stmt | Return-stmt
+Expression-stmt -> Expression #exp ; | #break break ; | ;
+Selection-stmt -> if ( Expression #unknownAddr ) Statement Else-stmt
+Else-stmt -> #jpfSaveAddr endif | #jpfSaveEmptyAddr else Statement #jpAddr endif
+Iteration-stmt -> #loopAddr repeat Statement until ( Expression #jpfLoopAddr)
+Return-stmt -> return Return-stmt-prime
+Return-stmt-prime -> #voidReturn ; | Expression #return ;
+Expression -> Simple-expression-zegond | #pid ID B
+B -> = #assign Expression | [ #arrIndex Expression ] H | Simple-expression-prime
+H -> = #assign Expression | G D C
+Simple-expression-zegond -> Additive-expression-zegond C
+Simple-expression-prime -> Additive-expression-prime C
+C -> Relop #cmp Additive-expression | EPSILON
+Relop -> #less < | #eq ==
+Additive-expression -> Term D
+Additive-expression-prime -> Term-prime D
+Additive-expression-zegond -> Term-zegond D
+D -> Addop Term D | EPSILON
+Addop -> #add + | #subt -
+Term -> Factor G
+Term-prime -> Factor-prime G
+Term-zegond -> Factor-zegond G
+G -> #mult * Factor G | EPSILON
+Factor -> ( Expression ) | #pid ID Var-call-prime | #pidNum NUM
+Var-call-prime -> ( Args #call ) | Var-prime
+Var-prime -> [ #arrIndex Expression ] | EPSILON
+Factor-prime -> ( Args #call ) | EPSILON
+Factor-zegond -> ( Expression ) | #pidNum NUM
+Args -> Arg-list | EPSILON
+Arg-list -> Expression Arg-list-prime
+Arg-list-prime -> , Expression Arg-list-prime | EPSILON
