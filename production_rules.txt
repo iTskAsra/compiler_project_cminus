@@ -7,7 +7,7 @@ Var-declaration-prime -> #simpleVar ; | [ #arrVar NUM ] ;
 Fun-declaration-prime -> #funcDeclare ( #argsStart Params #argsEnd ) #funDeclareEnd Compound-stmt
 Type-specifier -> #pidInt int | #pidVoid void
 Params -> #pidInt int #pidDeclare ID Param-prime Param-list | #emptyParams void
-Param-list -> , Param Param-list | EPSILON
+Param-list -> #incParamsCount , Param Param-list | EPSILON
 Param -> Declaration-initial Param-prime
 Param-prime -> #arrParam [  ] | EPSILON
 Compound-stmt -> { Declaration-list Statement-list }
@@ -29,8 +29,8 @@ Relop -> #less < | #eq ==
 Additive-expression -> Term D
 Additive-expression-prime -> Term-prime D
 Additive-expression-zegond -> Term-zegond D
-D -> Addop Term D | EPSILON
-Addop -> #add + | #subt -
+D -> Addop #add Term D | EPSILON
+Addop -> #addLiteral + | #subt -
 Term -> Factor G
 Term-prime -> Factor-prime G
 Term-zegond -> Factor-zegond G
